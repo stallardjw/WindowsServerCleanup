@@ -17,7 +17,7 @@
     Specifies the location of the log file.
 
 .EXAMPLE
-    .\Cleanup.ps1 -DryRun -DaysOld 3
+    .\ImprovedNOCCleanup.ps1 -DryRun -DaysOld 3
 
 .NOTES
     Last Revised: 2/12/2024
@@ -31,7 +31,7 @@ param(
 )
 
 #---------------------------------------------------------------------
-# Logging: Write messages with a timestamp to both the console and log file.
+# Logging function: Write messages with a timestamp to both the console and log file.
 #---------------------------------------------------------------------
 function Write-Log {
     param(
@@ -61,7 +61,7 @@ function Get-FolderSize {
                 }
             }
         } catch {
-            Write-Log "Error getting folder size for $Path: $_"
+            Write-Log "Error getting folder size for ${Path}: $_"
         }
     }
     return $size
@@ -82,7 +82,7 @@ function Remove-Items {
         try {
             Remove-Item -Path $PathPattern -Recurse -Force -ErrorAction SilentlyContinue -Verbose
         } catch {
-            Write-Log "Error deleting items for pattern $PathPattern: $_"
+            Write-Log "Error deleting items for pattern ${PathPattern}: $_"
         }
     }
 }
