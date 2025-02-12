@@ -20,7 +20,6 @@
     .\ImprovedNOCCleanup.ps1 -DryRun -DaysOld 3
 
 .NOTES
-    Last Revised: 2/12/2024
 #>
 
 [CmdletBinding()]
