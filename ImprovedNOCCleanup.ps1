@@ -11,10 +11,10 @@
     If specified, the script only logs the actions it would take without deleting files.
 
 .PARAMETER DaysOld
-    Specifies the age threshold (in days) for cleaning log files.
+    Specifies the age threshold (in days) for cleaning log files. Default is 3 days.
 
 .PARAMETER LogFile
-    Specifies the location of the log file.
+    Specifies the location of the log file. Default is "$env:USERPROFILE\cleanup_log.txt".
 
 .EXAMPLE
     .\ImprovedNOCCleanup.ps1 -DryRun -DaysOld 3
