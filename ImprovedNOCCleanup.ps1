@@ -259,7 +259,8 @@ function Process-UserCache {
 # Display header information
 Write-Host "#######################################################" -ForegroundColor Yellow
 Write-Host "Improved PowerShell Cleanup Script for NOC" -ForegroundColor Green
-Write-Host "Last Revised: 7/19/2024" -ForegroundColor Green
+Write-Host "Last Revised: 2/12/2025" -ForegroundColor Green
+Write-Host "By: Jonathan Stallard" -ForegroundColor Green
 Write-Host "#######################################################" -ForegroundColor Yellow
 Write-Log "Cleanup Script Started"
 
