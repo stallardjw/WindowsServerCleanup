@@ -229,15 +229,20 @@ function Process-UserCache {
     $outlookPath = "C:\Users\$UserName\AppData\Local\Microsoft\Outlook"
     $initialSize = Get-FolderSize -Path $outlookPath
     if (Test-Path $outlookPath) {
+        # Fix: Delete OST files only if they haven't been modified in the last 14 days and are larger than 1GB.
         $ostFiles = Get-ChildItem $outlookPath -Filter *.ost -File -ErrorAction SilentlyContinue |
-                    Where-Object { ($_.LastWriteTime -gt (Get-Date).AddDays(-14)) -and (($_.Length / 1GB) -gt 1) }
+                    Where-Object { ($_.LastWriteTime -le (Get-Date).AddDays(-14)) -and (($_.Length / 1GB) -gt 1) }
         foreach ($file in $ostFiles) {
             Write-Host "Deleting OST file: $($file.FullName)" -ForegroundColor Yellow
             Write-Log "Deleting OST file: $($file.FullName)"
             $global:TotalSpaceCleared += $file.Length
             if (-not $DryRun) {
                 try {
-                    Remove-Item $file.FullName -Force -ErrorAction SilentlyContinue
+                    # Remove the ReadOnly attribute if set to avoid Access Denied errors.
+                    if ($file.Attributes -band [System.IO.FileAttributes]::ReadOnly) {
+                        $file.Attributes = $file.Attributes -bxor [System.IO.FileAttributes]::ReadOnly
+                    }
+                    Remove-Item $file.FullName -Force -ErrorAction Stop
                 } catch {
                     Write-Log "Error deleting OST file $($file.FullName): $_"
                 }
