@@ -4,8 +4,9 @@
 
 .DESCRIPTION
     This script cleans caches (e.g. Firefox, Chrome, Edge, Teams, etc.), temporary folders, CBS logs,
-    SoftwareDistribution downloads, and additional log files. It exports the list of users, then processes each user.
-    Use the -DryRun switch to simulate deletion without actually removing any files.
+    SoftwareDistribution downloads, additional log files, and other common Windows directories.
+    It exports the list of users, then processes each user. Use the -DryRun switch to simulate deletion 
+    without actually removing any files.
     
 .PARAMETER DryRun
     If specified, the script only logs the actions it would take without deleting files.
@@ -20,7 +21,7 @@
     .\ImprovedNOCCleanup.ps1 -DryRun -DaysOld 3
 
 .NOTES
-    Last Revised: 2/12/2025
+    Last Revised: 4/1/2025
     By: Jonathan Stallard
 #>
 
@@ -163,7 +164,7 @@ function Process-UserCache {
         },
         @{
             Description = "Toshiba Cache"
-            BasePath    = "C:\Users\$UserName\TOSHIBA\eSTUDIOX\UNIDRV\Cache"
+            BasePath    = "C:\Users\$UserName\Toshiba\eSTUDIOX\UNIDRV\Cache"
             Patterns    = @("*")
         },
         @{
@@ -229,7 +230,7 @@ function Process-UserCache {
     $outlookPath = "C:\Users\$UserName\AppData\Local\Microsoft\Outlook"
     $initialSize = Get-FolderSize -Path $outlookPath
     if (Test-Path $outlookPath) {
-        # Fix: Delete OST files only if they haven't been modified in the last 14 days and are larger than 1GB.
+        # Delete OST files only if they haven't been modified in the last 14 days and are larger than 1GB.
         $ostFiles = Get-ChildItem $outlookPath -Filter *.ost -File -ErrorAction SilentlyContinue |
                     Where-Object { ($_.LastWriteTime -le (Get-Date).AddDays(-14)) -and (($_.Length / 1GB) -gt 1) }
         foreach ($file in $ostFiles) {
@@ -264,7 +265,7 @@ function Process-UserCache {
 # Display header information
 Write-Host "#######################################################" -ForegroundColor Yellow
 Write-Host "Improved PowerShell Cleanup Script for NOC" -ForegroundColor Green
-Write-Host "Last Revised: 2/12/2025" -ForegroundColor Green
+Write-Host "Last Revised: 4/1/2025" -ForegroundColor Green
 Write-Host "By: Jonathan Stallard" -ForegroundColor Green
 Write-Host "#######################################################" -ForegroundColor Yellow
 Write-Log "Cleanup Script Started"
@@ -365,6 +366,66 @@ if (-not $DryRun) {
     } catch {
         Write-Log "Error starting Disk Cleanup: $_"
     }
+}
+
+# --- Section 16: Clean User Temp folders ---
+Write-Host "Cleaning User Temp folders" -ForegroundColor Green
+Write-Log "Cleaning User Temp folders"
+foreach ($user in $users) {
+    $userTemp = "C:\Users\$($user.Name)\AppData\Local\Temp"
+    $initialSize = Get-FolderSize -Path $userTemp
+    if (Test-Path $userTemp) {
+        Remove-Items -PathPattern (Join-Path $userTemp "*.*") -DryRun:$DryRun
+    }
+    $finalSize = Get-FolderSize -Path $userTemp
+    $global:TotalSpaceCleared += ($initialSize - $finalSize)
+}
+
+# --- Section 17: Clean Windows Prefetch ---
+$prefetchPath = "C:\Windows\Prefetch"
+Write-Host "Cleaning Windows Prefetch" -ForegroundColor Green
+Write-Log "Cleaning Windows Prefetch"
+$initialSize = Get-FolderSize -Path $prefetchPath
+if (Test-Path $prefetchPath) {
+    Remove-Items -PathPattern (Join-Path $prefetchPath "*.*") -DryRun:$DryRun
+}
+$finalSize = Get-FolderSize -Path $prefetchPath
+$global:TotalSpaceCleared += ($initialSize - $finalSize)
+
+# --- Section 18: Clean Windows Error Reporting (WER) ---
+$werPath = "C:\ProgramData\Microsoft\Windows\WER"
+Write-Host "Cleaning Windows Error Reporting (WER)" -ForegroundColor Green
+Write-Log "Cleaning Windows Error Reporting (WER)"
+$initialSize = Get-FolderSize -Path $werPath
+if (Test-Path $werPath) {
+    Remove-Items -PathPattern (Join-Path $werPath "*.*") -DryRun:$DryRun
+}
+$finalSize = Get-FolderSize -Path $werPath
+$global:TotalSpaceCleared += ($initialSize - $finalSize)
+
+# --- Section 19: Clean Windows Update Logs ---
+$wuLogsPath = "C:\Windows\Logs\WindowsUpdate"
+Write-Host "Cleaning Windows Update Logs" -ForegroundColor Green
+Write-Log "Cleaning Windows Update Logs"
+$initialSize = Get-FolderSize -Path $wuLogsPath
+if (Test-Path $wuLogsPath) {
+    Remove-Items -PathPattern (Join-Path $wuLogsPath "*.*") -DryRun:$DryRun
+}
+$finalSize = Get-FolderSize -Path $wuLogsPath
+$global:TotalSpaceCleared += ($initialSize - $finalSize)
+
+# --- Section 20: Clear Recycle Bin ---
+Write-Host "Clearing Recycle Bin" -ForegroundColor Green
+Write-Log "Clearing Recycle Bin"
+if (-not $DryRun) {
+    try {
+        Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+    } catch {
+        Write-Log "Error clearing Recycle Bin: $_"
+    }
+} else {
+    Write-Host "Dry run: Recycle Bin not cleared." -ForegroundColor Yellow
+    Write-Log "Dry run: Recycle Bin not cleared."
 }
 
 #--- Final Summary ---
